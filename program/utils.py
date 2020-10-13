@@ -88,6 +88,9 @@ def get_mad_sigma(x):
     """
     return np.median(np.abs(x-np.median(x)))*1.4826
 
+def standarize(x):
+    return (x-np.median(x))/get_mad_sigma(x)
+
 def cosmic_ray_correct(input_dataset):
     """
     Function for correcting cosmic rays from the STIS dataset.
@@ -161,6 +164,70 @@ def pixelify(STIS_dataset, Npixels = 16):
 
 	return pixel_dataset
 
+def normalize_pixels(pixel_dataset):
+	"""
+	"""
+	return ???
+
+def get_phases(t,P,t0):
+    t = t + 2400000.5
+    """ 
+    Given input times, a period (or posterior dist of periods)
+    and time of transit center (or posterior), returns the 
+    phase at each time t.
+    """
+    if type(t) is not float:
+        phase = ((t - np.median(t0))/np.median(P)) % 1
+        ii = np.where(phase>=0.5)[0]
+        phase[ii] = phase[ii]-1.0
+    else:   
+        phase = ((t - np.median(t0))/np.median(P)) % 1
+        if phase>=0.5:
+            phase = phase - 1.0
+    return phase
+
+
+def regressed_PLD(normalized_pixels, out_of_transit_indices):
+	"""
+	"""
+
+	# Regress PLD on those out-of-transit datapoints. Add a matrix of ones to account for the A coefficient:
+	X = np.vstack(( np.ones(Phat.shape[0]), Phat.T ))
+	# Perform linear regression to obtain coefficients on out-of-transit data:
+	result = np.linalg.lstsq(X.T[idx_oot,:], f[idx_oot], rcond=None)
+	coeffs = result[0]
+
+	return ???
+
+def standarize_data(input_data):
+    """
+    Standarize the dataset
+    """
+    output_data = np.copy(input_data)
+    averages = np.median(input_data,axis=1)
+    for i in range(len(averages)):
+        sigma = get_mad_sigma(output_data[i,:])
+        output_data[i,:] = output_data[i,:] - averages[i]
+        output_data[i,:] = output_data[i,:]/sigma
+    return output_data
+
+def classic_PCA(Input_Data, standarize = True):
+    """  
+    classic_PCA function
+    Description
+    This function performs the classic Principal Component Analysis on a given dataset.
+    """
+    if standarize:
+        Data = standarize_data(Input_Data)
+    else:
+        Data = np.copy(Input_Data)
+    eigenvectors_cols,eigenvalues,eigenvectors_rows = np.linalg.svd(np.cov(Data))
+    idx = eigenvalues.argsort()
+    eigenvalues = eigenvalues[idx[::-1]]
+    eigenvectors_cols = eigenvectors_cols[:,idx[::-1]]
+    eigenvectors_rows = eigenvectors_rows[idx[::-1],:]
+    # Return: V matrix, eigenvalues and the principal components.
+    return eigenvectors_rows,eigenvalues,np.dot(eigenvectors_rows,Data)
 
 
 
