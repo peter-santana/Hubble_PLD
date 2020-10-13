@@ -30,16 +30,9 @@ def STIS_dataset_from_fits(directory = "HST-STIS-HD189733b", visit = 1):
 	"""
 
 	files = sorted(glob.glob(directory + '/visit' + str(visit) + '/*.fits'))
-
 	hdul = fits.open(files[0])
-	test_file_1_arr = hdul[0].data
-	testing_array = np.zeros(test_file_1_arr.shape)
-	for f in files:
-	    hdul = fits.open(f)
-	    testing_array = testing_array + hdul[0].data
-
+	testing_array = np.zeros(hdul[0].data.shape)
 	Ntimes = len(files)
-
 	full_array = np.zeros((Ntimes,testing_array.shape[0],testing_array.shape[1]))
 	date_array = np.zeros(Ntimes)
 
@@ -50,6 +43,41 @@ def STIS_dataset_from_fits(directory = "HST-STIS-HD189733b", visit = 1):
 	    date_array[int(f[33:36])] = (tstart+tend)/2
 
 	date_array = np.reshape(date_array, (len(date_array),1))
+
+	# WORK IN PROGRESS!!!!!
+
+def orbit_excise(STIS_dataset, orbit_to_excise = 1):
+	"""
+	"""
+	return ??
+
+def scan_excise(STIS_dataset, scans_to_excise = ['example', 'items']):
+	"""
+	"""
+	return ???
+
+def STIS_select_aperture(STIS_dataset, center_pixel = 57, aperture_width = 10):
+	"""
+	Function for reducing a STIS_dataset to a selected aperture.
+
+	Parameters
+	----------
+	center_pixel : integer
+		Selects the row (indexed from top to bottom in the spatial dimension)
+		that will center the aperture.
+	aperture_width : integer
+		Selects the distance from the center_pixel that the aperture will span
+		in each direction.
+
+	Returns
+	-------
+	STIS_dataset : 3D numpy array
+		Returns a numpy array with a time dimension [explain better]
+	"""
+	top_border = center_pixel - aperture_width
+	bottom_border = center_pixel + aperture_width
+	sub_array = STIS_dataset[:,top_border:bottom_border,:]
+	return sub_array
 
 	# WORK IN PROGRESS!!!!!
 
@@ -106,3 +134,37 @@ def cosmic_ray_correct(input_dataset):
             work_dataset[i,:,j][idx_True] = interpolated
     
     return work_dataset
+
+def pixelify(STIS_dataset, Npixels = 16):
+	"""
+	Function to cut up a STIS_dataset into discrete white-light pixels.
+
+	Parameters
+	----------
+	STIS_dataset : 3D numpy array
+
+	Npixels : integer
+		Number of individual pixels that the dataset will be divided into.
+	"""
+	Ntimes = len(STIS_dataset)
+	Pixels_Array = np.zeros((Ntimes, Npixels),dtype= 'f8')
+	for i in range(Ntimes):
+	    new_data = STIS_dataset[i]
+	    sub_arrays = np.array_split(new_data, Npixels, axis = 0)
+	    pixel_list = []
+	    for j in range(Npixels):
+	        Pixel = sub_arrays[j]
+	        Flux = np.sum(Pixel)
+	        Pixels_Array[i,j] = Flux
+
+	Array = np.hstack((date_array, Pixels_Array)) #keep this???
+
+	return pixel_dataset
+
+
+
+
+
+
+
+
